@@ -1,9 +1,8 @@
-import asyncio
 import time
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
-from datetime import datetime  # ✅ EKLENDİ
+from datetime import datetime
 
 import httpx
 from bs4 import BeautifulSoup
@@ -24,7 +23,7 @@ def validate_url(url: str) -> bool:
 
 async def fetch_context(url: str) -> Dict[str, Any]:
     if not validate_url(url):
-        return {"error": "Güvensiz veya geçersiz URL", "status_code": 400}
+        return {"error": "Guvensiz veya gecersiz URL", "status_code": 400}
     
     context = {
         "url": url,
@@ -53,12 +52,12 @@ async def fetch_context(url: str) -> Dict[str, Any]:
             context["response_time"] = round(elapsed, 3)
             context["ssl_info"]["valid"] = True
     except httpx.TimeoutException:
-        context["error"] = "Zaman aşımı (5 sn)"
+        context["error"] = "Zaman asimi (5 sn)"
     except httpx.SSLProtocolError:
-        context["error"] = "SSL sertifika hatası"
+        context["error"] = "SSL sertifika hatasi"
         context["ssl_info"]["valid"] = False
     except Exception as e:
-        context["error"] = f"Fetch hatası: {str(e)}"
+        context["error"] = f"Fetch hatasi: {str(e)}"
     
     return context
 
@@ -243,8 +242,9 @@ class OmniOrchestrator:
             EcoAnalyzer()
         ]
     
-    async def analyze(self, url: str):  # Tip bildirimi kaldırıldı (import döngüsü engeli)
-        from models import OmniReport  # ✅ İçeride import edildi
+    async def analyze(self, url: str):
+        # Tip bildirimi kaldırıldı ve içeride import edildi
+        from models import OmniReport
         context = await fetch_context(url)
         
         if "error" in context and context.get("status_code") != 200:
