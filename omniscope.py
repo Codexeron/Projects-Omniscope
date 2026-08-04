@@ -11,23 +11,24 @@ import uvicorn
 from engine import OmniOrchestrator, validate_url
 from models import OmniReport
 
-app = FastAPI(title="OmniScope API", version="1.0.0")
+app = FastAPI(title="OmniScope API", version="1.0.1")
 orchestrator = OmniOrchestrator()
 
 @app.get("/analyze", response_model=OmniReport)
 async def analyze_endpoint(url: str = Query(..., description="Analiz edilecek URL")):
     if not validate_url(url):
+        # ✅ İYİLEŞTİRME 3: Geçersiz URL'de 400 Bad Request dönüyor
         raise HTTPException(status_code=400, detail="Geçersiz veya güvensiz URL (localhost/IP engeli)")
     
     report = await orchestrator.analyze(url)
     if report.status == "error":
-        # Hata durumunda JSON döner ama 200 ile (istemci hatası değil, analiz hatası)
-        return JSONResponse(content=report.model_dump(), status_code=200)
+        # Analiz hatasında 500 Internal Server Error dönüyor
+        raise HTTPException(status_code=500, detail=report.error_msg or "Analiz sırasında bilinmeyen hata")
     return report
 
 @app.get("/health")
 async def health():
-    return {"status": "ready"}
+    return {"status": "ready", "version": "1.0.1"}
 
 def run_cli():
     parser = argparse.ArgumentParser(description="OmniScope - Web Sitesi Analiz Aracı")
