@@ -52,9 +52,12 @@ Clone or download the project files, then run the automated setup:
 ```bash
 python setup.py
 
+python omniscope.py - (Web Dashboard'u Başlatma)
+python omniscope.py https://codexeron.com - (json sorgu şekli bu şekilde)
 
-python omniscope.py https://codexeron.com - json sorgu şekli bu şekilde
+-venv\Scripts\activate (Gerekebilir)
 
+- http://localhost:8080 (Tarayıcı adresi)
 
 - Örnek Rapor Aşağıdadır.
 
