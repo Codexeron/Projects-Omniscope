@@ -1,38 +1,53 @@
-# 🏛️ OmniScope - Web Sitesi Analiz Motoru
+# 🏛️ OmniScope - Web Analysis Engine
 
-**OmniScope**, bir web sitesini **6 farklı mühendislik ekseninde** analiz eden, kurulumu tek satırda biten, dosya sayısı abartılmamış (sadece 7 dosya) ve her kullanıcının kendi bilgisayarını bağımsız bir sunucu (API) gibi kullanabildiği hafif bir mikro-servis çözümüdür.
+**OmniScope** is a lightweight, portable, and single-command web analysis engine that evaluates any website across **6 engineering dimensions**. Designed with a "zero-configuration" philosophy, it turns your local machine into a standalone analysis tool—no cloud dependencies, no bloated files.
 
-> 🎯 **Slogan:** *"Herkesin bilgisayarı, kendi güvenlikli analiz kulesi olsun."*
+> 🎯 **Slogan:** *"Your machine, your private analysis tower."*
 
 ---
 
-## 🚀 Özellikler (Feature Set)
+## 📋 Table of Contents
 
-| Eksen | Açıklama | Ölçütler |
+1. [Features](#-features)
+2. [Requirements](#-requirements)
+3. [Installation](#-installation)
+4. [Execution Methods](#-execution-methods)
+   - [CLI (Command Line Interface)](#-method-1-cli-command-line-interface---recommended)
+   - [API Server (Optional)](#-method-2-api-server-mode-optional)
+5. [How It Works (Technical Flow)](#-how-it-works-technical-flow)
+6. [Sample Output](#-sample-output)
+7. [Project Structure](#-project-structure)
+8. [Security Policies](#-security-policies)
+9. [Troubleshooting](#-troubleshooting)
+10. [Roadmap](#-roadmap)
+11. [License](#-license)
+
+---
+
+## ✨ Features
+
+| Dimension | Description | Key Metrics |
 | :--- | :--- | :--- |
-| ⚡ **Performans** | Sayfa yüklenme hızı ve ağırlık | TTFB, Toplam Boyut (kb), Gzip sıkıştırması |
-| 🔒 **Güvenlik** | Güvenlik başlıkları ve SSL sağlığı | SSL geçerliliği, HSTS, X-Frame-Options, X-Content-Type |
-| 📈 **SEO** | Arama motoru optimizasyon temelleri | Title etiketi (uzunluk), Meta Description, H1 etiketi varlığı |
-| ♿ **Erişilebilirlik (A11Y)** | Kapsayıcı web standartları | Alt etiketleri, HTML Lang niteliği, ARIA label kullanımı |
-| 🧹 **İyi Uygulamalar** | Modern web kod standartları | Doctype, Charset bildirimi, Inline CSS/JS yoğunluğu |
-| 🌿 **Eko-Skor** | Çevresel ayak izi simülasyonu | Tahmini CO₂ emisyonu (sayfa boyutuna göre) |
+| ⚡ **Performance** | Page loading speed and weight | TTFB, Total Size (KB), Gzip compression |
+| 🔒 **Security** | Headers and SSL/TLS health | SSL validity, HSTS, X-Frame-Options, X-Content-Type |
+| 📈 **SEO** | Search engine optimization basics | Title (length), Meta Description, H1 tags |
+| ♿ **Accessibility (A11Y)** | Inclusive web standards | Image Alt attributes, HTML Lang, ARIA labels |
+| 🧹 **Best Practices** | Modern web coding standards | Doctype, Charset, Inline CSS/JS count |
+| 🌿 **Eco-Score** | Environmental impact simulation | Estimated CO₂ emissions, page size |
 
 ---
 
-## 📦 Gereksinimler (Requirements)
+## 📦 Requirements
 
-- **Python 3.11** veya üzeri
-- İnternet bağlantısı (kurulum ve analiz için)
-- İşletim Sistemi: Windows / macOS / Linux (Tam platform bağımsız)
+- **Python 3.11** or higher
+- Internet connection (for analysis and initial setup)
+- OS: Windows / macOS / Linux (fully platform-independent)
 
 ---
 
-## ⚙️ Kurulum (Installation)
+## ⚙️ Installation
 
-Projeyi kurmak, **sadece 1 komut** ve **tamamen otomatiktir**. Elinizle hiçbir bağımlılık kurmanıza, test yapmanıza veya sanal environment ile uğraşmanıza gerek yoktur.
-
-1. Terminali açın ve proje dizinine gidin.
-2. Aşağıdaki sihri çalıştırın:
+Clone or download the project files, then run the automated setup:
 
 ```bash
 python setup.py
