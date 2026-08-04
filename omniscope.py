@@ -2,33 +2,49 @@ import sys
 import json
 import argparse
 import asyncio
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, Query, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from engine import OmniOrchestrator, validate_url
 from models import OmniReport
 
-app = FastAPI(title="OmniScope API", version="1.0.1")
+app = FastAPI(title="OmniScope API", version="1.1.0")
 orchestrator = OmniOrchestrator()
+
+# Statik dosyalar (CSS, JS) ve template'ler
+static_dir = Path(__file__).parent / "static"
+templates_dir = Path(__file__).parent / "templates"
+
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard():
+    """Ana Dashboard sayfası"""
+    index_path = templates_dir / "index.html"
+    if index_path.exists():
+        with open(index_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return HTMLResponse("<h1>Dashboard not found. Please create templates/index.html</h1>")
 
 @app.get("/analyze", response_model=OmniReport)
 async def analyze_endpoint(url: str = Query(..., description="Analiz edilecek URL")):
     if not validate_url(url):
-        # ✅ İYİLEŞTİRME 3: Geçersiz URL'de 400 Bad Request dönüyor
         raise HTTPException(status_code=400, detail="Geçersiz veya güvensiz URL (localhost/IP engeli)")
     
     report = await orchestrator.analyze(url)
     if report.status == "error":
-        # Analiz hatasında 500 Internal Server Error dönüyor
         raise HTTPException(status_code=500, detail=report.error_msg or "Analiz sırasında bilinmeyen hata")
     return report
 
 @app.get("/health")
 async def health():
-    return {"status": "ready", "version": "1.0.1"}
+    return {"status": "ready", "version": "1.1.0"}
 
 def run_cli():
     parser = argparse.ArgumentParser(description="OmniScope - Web Sitesi Analiz Aracı")
