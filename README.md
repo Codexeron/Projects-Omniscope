@@ -55,7 +55,8 @@ python setup.py
 
 python omniscope.py https://codexeron.com - json sorgu şekli bu şekilde
 
-Örnek - Rapor
+
+- Örnek Rapor Aşağıdadır.
 
 {
   "meta": {
