@@ -2,7 +2,7 @@ import asyncio
 import time
 import re
 from abc import ABC, abstractmethod
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -195,7 +195,6 @@ class BestPracticesAnalyzer(BaseAnalyzer):
         if not soup:
             return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
         
-        # ✅ İYİLEŞTİRME: DOCTYPE kontrolü regex ile tüm HTML'de aranıyor
         doctype = bool(re.search(r'<!doctype\s+html', html, re.IGNORECASE))
         charset = soup.find("meta", attrs={"charset": True}) or soup.find("meta", attrs={"http-equiv": "Content-Type"})
         style_tags = soup.find_all("style")
@@ -233,6 +232,115 @@ class EcoAnalyzer(BaseAnalyzer):
             }
         }
 
+# 7. YENİ: Kırık Bağlantı (Broken Link) Analizi
+class BrokenLinkAnalyzer(BaseAnalyzer):
+    def analyze(self, context):
+        html = context.get("html", "")
+        soup = BeautifulSoup(html, "lxml") if html else None
+        if not soup:
+            return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
+        
+        base_url = context.get("url", "")
+        links = soup.find_all("a", href=True)
+        total_links = len(links)
+        
+        if total_links == 0:
+            return {"score": 100, "details": {"total_links": 0, "broken_links": 0, "broken_urls": []}}
+        
+        # Sadece ilk 20 linki kontrol et (performans için)
+        check_links = links[:20]
+        broken = []
+        
+        # Senkron kontrol (basitlik için)
+        import requests
+        for link in check_links:
+            href = link.get("href", "")
+            if href.startswith("#") or href.startswith("javascript:"):
+                continue
+            full_url = urljoin(base_url, href)
+            try:
+                resp = requests.head(full_url, timeout=3, allow_redirects=True)
+                if resp.status_code >= 400:
+                    broken.append(full_url)
+            except:
+                broken.append(full_url)
+        
+        broken_count = len(broken)
+        # Skor: Her kırık link %5 düşürür (max 100)
+        score = max(0, 100 - (broken_count * 5))
+        
+        return {
+            "score": round(score, 2),
+            "details": {
+                "total_links": total_links,
+                "broken_links": broken_count,
+                "broken_urls": broken[:10]  # İlk 10 kırık linki göster
+            }
+        }
+
+# 8. YENİ: Mobil Uyumluluk (Mobile Friendly) Analizi
+class MobileFriendlyAnalyzer(BaseAnalyzer):
+    def analyze(self, context):
+        html = context.get("html", "")
+        soup = BeautifulSoup(html, "lxml") if html else None
+        if not soup:
+            return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
+        
+        score = 0
+        details = {}
+        
+        # 1. Viewport meta etiketi var mı?
+        viewport = soup.find("meta", attrs={"name": "viewport"})
+        has_viewport = viewport is not None
+        if has_viewport:
+            score += 30
+            details["has_viewport"] = True
+            details["viewport_content"] = viewport.get("content", "")
+        else:
+            details["has_viewport"] = False
+        
+        # 2. Responsive CSS (media query) var mı? (style etiketlerinde veya inline)
+        style_tags = soup.find_all("style")
+        has_media_query = False
+        for style in style_tags:
+            if style.string and "@media" in style.string:
+                has_media_query = True
+                break
+        
+        # Ayrıca link etiketlerinde CSS dosyaları kontrol et (basit)
+        link_tags = soup.find_all("link", rel="stylesheet")
+        for link in link_tags:
+            href = link.get("href", "")
+            if href and ".css" in href:
+                has_media_query = True  # Varsayalım ki harici CSS responsive içeriyor (kabül)
+                break
+        
+        if has_media_query:
+            score += 30
+            details["has_media_query"] = True
+        else:
+            details["has_media_query"] = False
+        
+        # 3. Görseller responsive mi? (img etiketlerinde width/height yüzde mi?)
+        imgs = soup.find_all("img")
+        responsive_images = 0
+        for img in imgs:
+            width = img.get("width", "")
+            height = img.get("height", "")
+            if "%" in str(width) or "%" in str(height) or "max-width: 100%" in str(img.get("style", "")):
+                responsive_images += 1
+        
+        img_score = (responsive_images / len(imgs) * 40) if imgs else 40
+        details["total_images"] = len(imgs)
+        details["responsive_images"] = responsive_images
+        
+        score += min(40, img_score)
+        
+        return {
+            "score": round(min(100, score), 2),
+            "details": details
+        }
+
 # --- Orkestratör ---
 class OmniOrchestrator:
     def __init__(self):
@@ -242,18 +350,22 @@ class OmniOrchestrator:
             SeoAnalyzer(),
             AccessibilityAnalyzer(),
             BestPracticesAnalyzer(),
-            EcoAnalyzer()
+            EcoAnalyzer(),
+            BrokenLinkAnalyzer(),      # YENİ
+            MobileFriendlyAnalyzer()   # YENİ
         ]
     
     async def analyze(self, url: str):
         from models import OmniReport
         context = await fetch_context(url)
         
-        # Eğer fetch hatası varsa ve durum kodu 200 değilse
         if "error" in context and context.get("status_code") != 200:
             return OmniReport(
-                meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.1"},
-                scores={"performance": 0, "security": 0, "seo": 0, "accessibility": 0, "best_practices": 0, "eco_score": 0},
+                meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.1.0"},
+                scores={
+                    "performance": 0, "security": 0, "seo": 0, "accessibility": 0,
+                    "best_practices": 0, "eco_score": 0, "broken_links": 0, "mobile_friendly": 0
+                },
                 details={"error": context["error"]},
                 status="error",
                 error_msg=context["error"]
@@ -262,30 +374,29 @@ class OmniOrchestrator:
         results = {}
         details = {}
         
-        # ✅ GİRİNTİ DÜZELTİLDİ: Bu satırdan itibaren 4 boşluk
         for analyzer in self.analyzers:
             result = analyzer.analyze(context)
             name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
             results[name] = result["score"]
             details[name] = result["details"]
         
-        # ✅ İYİLEŞTİRME: Anahtar standardizasyonu ve details içindeki bestpractices düzeltildi
+        # Anahtar standardizasyonu
         scores_map = {
             "performance": results.get("performance", 0),
             "security": results.get("security", 0),
             "seo": results.get("seo", 0),
             "accessibility": results.get("accessibility", 0),
             "best_practices": results.get("bestpractices", 0),
-            "eco_score": results.get("eco", 0)
+            "eco_score": results.get("eco", 0),
+            "broken_links": results.get("brokenlink", 0),       # YENİ
+            "mobile_friendly": results.get("mobilefriendly", 0) # YENİ
         }
         
-        # ✅ details içindeki 'bestpractices' anahtarını 'best_practices' yapalım
-        # (Eski kod 'bestpractices' gönderiyordu, şimdi düzeltiyoruz)
         if "bestpractices" in details:
             details["best_practices"] = details.pop("bestpractices")
         
         return OmniReport(
-            meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.1"},
+            meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.1.0"},
             scores=scores_map,
             details=details,
             status="success"
