@@ -262,10 +262,15 @@ class OmniOrchestrator:
         results = {}
         details = {}
         for analyzer in self.analyzers:
-            result = analyzer.analyze(context)
-            name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
-            results[name] = result["score"]
-            details[name] = result["details"]
+    result = analyzer.analyze(context)
+    raw_name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
+    # bestpractices özel durumu
+    if raw_name == "bestpractices":
+        name = "best_practices"
+    else:
+        name = raw_name
+    results[name] = result["score"]
+    details[name] = result["details"]
         
         # ✅ İYİLEŞTİRME 2: Anahtar standardizasyonu (bestpractices -> best_practices)
         scores_map = {
