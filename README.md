@@ -51,3 +51,63 @@ Clone or download the project files, then run the automated setup:
 
 ```bash
 python setup.py
+
+
+python omniscope.py https://codexeron.com - json sorgu şekli bu şekilde
+
+Örnek - Rapor
+
+{
+  "meta": {
+    "target_url": "https://codexeron.com",
+    "analyzed_at": "2026-08-04T22:03:52.749131",
+    "version": "1.0.0"
+  },
+  "scores": {
+    "performance": 27.85,
+    "security": 100.0,
+    "seo": 100.0,
+    "accessibility": 100.0,
+    "best_practices": 80.0,
+    "eco_score": 96.42
+  },
+  "details": {
+    "performance": {
+      "ttfb_seconds": 1.109,
+      "total_size_kb": 71.57,
+      "is_gzip": false
+    },
+    "security": {
+      "ssl_valid": true,
+      "has_hsts": true,
+      "has_xframe": true,
+      "has_xcontent_type": true
+    },
+    "seo": {
+      "has_title": true,
+      "title_length": 45,
+      "has_meta_description": true,
+      "meta_description_length": 93,
+      "has_h1": true,
+      "h1_count": 2
+    },
+    "accessibility": {
+      "total_images": 6,
+      "images_with_alt": 6,
+      "has_lang_attr": true,
+      "has_aria_labels": true
+    },
+    "bestpractices": {
+      "has_doctype": true,
+      "has_charset": true,
+      "inline_style_count": 3,
+      "inline_script_count": 5
+    },
+    "eco": {
+      "estimated_co2_g": 0.129,
+      "page_size_kb": 71.57
+    }
+  },
+  "status": "success",
+  "error_msg": null
+}
