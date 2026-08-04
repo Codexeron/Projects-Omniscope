@@ -187,7 +187,7 @@ class AccessibilityAnalyzer(BaseAnalyzer):
             }
         }
 
-# 5. Best Practices (İYİLEŞTİRİLDİ - DOCTYPE Regex ile aranıyor)
+# 5. Best Practices
 class BestPracticesAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         html = context.get("html", "")
@@ -195,7 +195,7 @@ class BestPracticesAnalyzer(BaseAnalyzer):
         if not soup:
             return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
         
-        # ✅ İYİLEŞTİRME 1: DOCTYPE kontrolü artık regex ile tüm HTML'de aranıyor
+        # ✅ İYİLEŞTİRME: DOCTYPE kontrolü regex ile tüm HTML'de aranıyor
         doctype = bool(re.search(r'<!doctype\s+html', html, re.IGNORECASE))
         charset = soup.find("meta", attrs={"charset": True}) or soup.find("meta", attrs={"http-equiv": "Content-Type"})
         style_tags = soup.find_all("style")
@@ -261,26 +261,28 @@ class OmniOrchestrator:
         
         results = {}
         details = {}
-        for analyzer in self.analyzers:
-    result = analyzer.analyze(context)
-    raw_name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
-    # bestpractices özel durumu
-    if raw_name == "bestpractices":
-        name = "best_practices"
-    else:
-        name = raw_name
-    results[name] = result["score"]
-    details[name] = result["details"]
         
-        # ✅ İYİLEŞTİRME 2: Anahtar standardizasyonu (bestpractices -> best_practices)
+        # ✅ GİRİNTİ DÜZELTİLDİ: Bu satırdan itibaren 4 boşluk
+        for analyzer in self.analyzers:
+            result = analyzer.analyze(context)
+            name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
+            results[name] = result["score"]
+            details[name] = result["details"]
+        
+        # ✅ İYİLEŞTİRME: Anahtar standardizasyonu ve details içindeki bestpractices düzeltildi
         scores_map = {
             "performance": results.get("performance", 0),
             "security": results.get("security", 0),
             "seo": results.get("seo", 0),
             "accessibility": results.get("accessibility", 0),
-            "best_practices": results.get("bestpractices", 0),  # Düzeltildi
+            "best_practices": results.get("bestpractices", 0),
             "eco_score": results.get("eco", 0)
         }
+        
+        # ✅ details içindeki 'bestpractices' anahtarını 'best_practices' yapalım
+        # (Eski kod 'bestpractices' gönderiyordu, şimdi düzeltiyoruz)
+        if "bestpractices" in details:
+            details["best_practices"] = details.pop("bestpractices")
         
         return OmniReport(
             meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.1"},
