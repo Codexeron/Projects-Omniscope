@@ -4,14 +4,14 @@ import subprocess
 import venv
 
 def main():
-    print("🚀 OmniScope Kurulum Başlatılıyor...")
+    print("[SETUP] OmniScope Kurulum Baslatiliyor...")
     
     venv_dir = "venv"
     if not os.path.exists(venv_dir):
-        print("📦 Sanal environment oluşturuluyor...")
+        print("[SETUP] Sanal environment olusturuluyor...")
         venv.create(venv_dir, with_pip=True)
     else:
-        print("✅ Sanal environment mevcut.")
+        print("[SETUP] Sanal environment mevcut.")
     
     # Pip ve python yolları
     if os.name == "nt":
@@ -22,21 +22,21 @@ def main():
         python_path = os.path.join(venv_dir, "bin", "python")
     
     # Pip upgrade (hata çıkarsa devam et)
-    print("📥 Bağımlılıklar yükleniyor (bu 20 saniye sürebilir)...")
+    print("[SETUP] Bagimliliklar yukleniyor (bu 20 saniye surebilir)...")
     subprocess.run([pip_path, "install", "--upgrade", "pip"], check=False, capture_output=True)
     subprocess.run([pip_path, "install", "-r", "requirements.txt"], check=True)
     
     # Test çalıştır
-    print("🧪 Otomatik test başlatılıyor (sizin test yapmanıza gerek yok)...")
+    print("[SETUP] Otomatik test baslatiliyor (sizin test yapmaniza gerek yok)...")
     result = subprocess.run([python_path, "test_runner.py"], capture_output=True, text=True)
     print(result.stdout)
     if result.returncode != 0:
-        print("❌ Test başarısız! Lütfen internet bağlantınızı kontrol edin.")
+        print("[ERROR] Test basarisiz! Lutfen internet baglantinizi kontrol edin.")
         print(result.stderr)
         sys.exit(1)
     else:
-        print("✅ TÜM TESTLER GEÇTİ. OmniScope kullanıma hazır!")
-        print("\n💡 Kullanım:")
+        print("[SUCCESS] TUM TESTLER GECTI. OmniScope kullanima hazir!")
+        print("\n[INFO] Kullanim:")
         print("   - API Sunucusu: python omniscope.py")
         print("   - CLI: python omniscope.py https://orneksite.com --json")
 
