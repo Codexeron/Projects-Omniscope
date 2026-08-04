@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import venv
-import shutil
 
 def main():
     print("🚀 OmniScope Kurulum Başlatılıyor...")
@@ -22,9 +21,9 @@ def main():
         pip_path = os.path.join(venv_dir, "bin", "pip")
         python_path = os.path.join(venv_dir, "bin", "python")
     
-    # Pip upgrade'ı atla, direkt bağımlılıkları yükle (uyarıyı bastır)
+    # Pip upgrade (hata çıkarsa devam et)
     print("📥 Bağımlılıklar yükleniyor (bu 20 saniye sürebilir)...")
-    subprocess.run([pip_path, "install", "--upgrade", "pip"], check=False, capture_output=True)  # hata çıksa da devam
+    subprocess.run([pip_path, "install", "--upgrade", "pip"], check=False, capture_output=True)
     subprocess.run([pip_path, "install", "-r", "requirements.txt"], check=True)
     
     # Test çalıştır
