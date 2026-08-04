@@ -7,7 +7,7 @@ async def run_tests():
     orchestrator = OmniOrchestrator()
     
     # Test 1: Örnek site
-    test_url = "https://example.com"
+    test_url = "https://facebook.com"
     print(f"[TEST] Test URL: {test_url}")
     report = await orchestrator.analyze(test_url)
     
