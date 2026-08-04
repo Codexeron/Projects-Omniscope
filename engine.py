@@ -6,6 +6,7 @@ import re
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
+from datetime import datetime  # EKLENDİ
 
 import httpx
 from bs4 import BeautifulSoup
@@ -44,7 +45,7 @@ async def fetch_context(url: str) -> Dict[str, Any]:
         async with httpx.AsyncClient(
             follow_redirects=True,
             timeout=httpx.Timeout(5.0, connect=2.0),
-            verify=True  # SSL doğrulama AÇIK
+            verify=True
         ) as client:
             resp = await client.get(url, headers={"User-Agent": "OmniScope/1.0"})
             elapsed = time.perf_counter() - start
@@ -54,10 +55,7 @@ async def fetch_context(url: str) -> Dict[str, Any]:
             context["html"] = resp.text
             context["content_length"] = len(resp.content)
             context["response_time"] = round(elapsed, 3)
-            
-            # SSL kontrolü (basitçe bağlantı doğrulandıysa)
-            context["ssl_info"]["valid"] = True  # httpx verify=True ile geçtiyse geçerlidir
-            # Issuer bilgisi ekstra detay için (opsiyonel)
+            context["ssl_info"]["valid"] = True
             
     except httpx.TimeoutException:
         context["error"] = "Zaman aşımı (5 sn)"
@@ -69,13 +67,13 @@ async def fetch_context(url: str) -> Dict[str, Any]:
     
     return context
 
-# --- Base Analyzer (SOLID - Open/Closed) ---
+# --- Base Analyzer ---
 class BaseAnalyzer(ABC):
     @abstractmethod
     def analyze(self, context: Dict[str, Any]) -> Dict[str, Any]:
         pass
 
-# 1. Performans Analizcisi
+# 1. Performans
 class PerformanceAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         ttfb = context.get("response_time", 0)
@@ -83,11 +81,9 @@ class PerformanceAnalyzer(BaseAnalyzer):
         headers = context.get("headers", {})
         is_gzip = any("gzip" in v.lower() for k, v in headers.items() if k.lower() == "content-encoding")
         
-        # Puan: TTFB < 0.3 sn ise 100, 1 sn üstü 0; Boyut < 500kb ise 100
         score_ttfb = max(0, 100 - (ttfb * 100)) if ttfb > 0 else 50
         score_size = max(0, 100 - (size_kb / 10)) if size_kb > 0 else 50
         score_gzip = 20 if is_gzip else 0
-        
         final_score = round(min(100, (score_ttfb * 0.5) + (score_size * 0.3) + score_gzip), 2)
         
         return {
@@ -99,12 +95,11 @@ class PerformanceAnalyzer(BaseAnalyzer):
             }
         }
 
-# 2. Güvenlik Analizcisi
+# 2. Güvenlik
 class SecurityAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         headers = context.get("headers", {})
         ssl_valid = context.get("ssl_info", {}).get("valid", False)
-        
         hsts = headers.get("strict-transport-security") is not None
         xframe = headers.get("x-frame-options") is not None
         xcontent = headers.get("x-content-type-options") is not None
@@ -125,7 +120,7 @@ class SecurityAnalyzer(BaseAnalyzer):
             }
         }
 
-# 3. SEO Analizcisi
+# 3. SEO
 class SeoAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         html = context.get("html", "")
@@ -167,7 +162,7 @@ class SeoAnalyzer(BaseAnalyzer):
             }
         }
 
-# 4. Erişilebilirlik (A11Y) - Basit Kontroller
+# 4. Erişilebilirlik
 class AccessibilityAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         html = context.get("html", "")
@@ -175,16 +170,13 @@ class AccessibilityAnalyzer(BaseAnalyzer):
         if not soup:
             return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
         
-        # Alt etiket kontrolü
         imgs = soup.find_all("img")
         imgs_with_alt = [i for i in imgs if i.get("alt") is not None and i["alt"].strip() != ""]
         img_score = (len(imgs_with_alt) / len(imgs) * 50) if imgs else 50
         
-        # Lang etiketi
         lang = soup.html.get("lang") if soup.html else None
         lang_score = 30 if lang else 0
         
-        # ARIA label kontrolü (basit)
         aria_labels = soup.find_all(attrs={"aria-label": True})
         aria_score = 20 if len(aria_labels) > 0 else 0
         
@@ -199,7 +191,7 @@ class AccessibilityAnalyzer(BaseAnalyzer):
             }
         }
 
-# 5. İyi Uygulamalar (Best Practices)
+# 5. Best Practices
 class BestPracticesAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         html = context.get("html", "")
@@ -207,11 +199,8 @@ class BestPracticesAnalyzer(BaseAnalyzer):
         if not soup:
             return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
         
-        # Doctype var mı?
         doctype = any("<!doctype" in part.lower() for part in html.split("\n")[:5])
-        # Charset var mı?
         charset = soup.find("meta", attrs={"charset": True}) or soup.find("meta", attrs={"http-equiv": "Content-Type"})
-        # CSS ve JS inline sayısı (aşırı inline kötü)
         style_tags = soup.find_all("style")
         script_tags = soup.find_all("script")
         
@@ -231,12 +220,10 @@ class BestPracticesAnalyzer(BaseAnalyzer):
             }
         }
 
-# 6. Eko Skor (Karbon Emisyonu Simülasyonu)
+# 6. Eko
 class EcoAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         size_kb = context.get("content_length", 0) / 1024
-        # Kabaca 1MB veri transferi ~ 1.8g CO2 (ort. 1.8g/kB aslında, ama simülasyon)
-        # 100 puan = 0 kb, 0 puan = 2000 kb üstü
         if size_kb <= 0:
             score = 100
         else:
@@ -249,7 +236,7 @@ class EcoAnalyzer(BaseAnalyzer):
             }
         }
 
-# --- Orkestratör (Coordinator) ---
+# --- Orkestratör ---
 class OmniOrchestrator:
     def __init__(self):
         self.analyzers: List[BaseAnalyzer] = [
@@ -261,8 +248,9 @@ class OmniOrchestrator:
             EcoAnalyzer()
         ]
     
-    async def analyze(self, url: str) -> OmniReport:
-        from models import OmniReport  # Döngüsel import engeli
+    async def analyze(self, url: str):  # Geri dönüş tipini kaldırdım, import sorununu engellemek için
+        # models import'unu fonksiyon içine alalım
+        from models import OmniReport
         context = await fetch_context(url)
         
         if "error" in context and context.get("status_code") != 200:
@@ -274,18 +262,14 @@ class OmniOrchestrator:
                 error_msg=context["error"]
             )
         
-        # Analizleri çalıştır (asenkron parse işlemi yok, ama CPU işi olduğu için thread havuzu zorunlu değil)
         results = {}
         details = {}
         for analyzer in self.analyzers:
-            # Async olmayan analizleri doğrudan çalıştır (kısa süreli)
-            # İleride asyncio.to_thread eklenebilir, ama BeautifulSoup CPU'da hızlı
             result = analyzer.analyze(context)
             name = analyzer.__class__.__name__.replace("Analyzer", "").lower()
             results[name] = result["score"]
             details[name] = result["details"]
         
-        # Standardize keys
         scores_map = {
             "performance": results.get("performance", 0),
             "security": results.get("security", 0),
@@ -295,7 +279,6 @@ class OmniOrchestrator:
             "eco_score": results.get("eco", 0)
         }
         
-        from datetime import datetime
         return OmniReport(
             meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.0"},
             scores=scores_map,
