@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniScope Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ OmniScope</h1>
+            <p>Web Site Analysis Dashboard</p>
+        </header>
+
+        <div class="input-section">
+            <input type="text" id="urlInput" placeholder="Enter URL (e.g., https://example.com)" value="https://codexeron.com">
+            <button id="analyzeBtn">Analyze</button>
+        </div>
+
+        <div id="loading" style="display:none;">⏳ Analyzing... Please wait.</div>
+
+        <div id="results" style="display:none;">
+            <div class="score-cards" id="scoreCards"></div>
+            <div class="charts">
+                <div class="chart-container">
+                    <h3>Radar Chart - 8 Dimensions</h3>
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>Bar Chart - Scores</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+            <div class="details-section">
+                <h3>Raw JSON</h3>
+                <pre id="jsonOutput"></pre>
+            </div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
