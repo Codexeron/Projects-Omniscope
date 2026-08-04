@@ -3,35 +3,35 @@ import json
 from engine import OmniOrchestrator
 
 async def run_tests():
-    print("⚡ OmniScope Test Sistemi Devrede...")
+    print("[TEST] OmniScope Test Sistemi Devrede...")
     orchestrator = OmniOrchestrator()
     
     # Test 1: Örnek site
     test_url = "https://example.com"
-    print(f"🔗 Test URL: {test_url}")
+    print(f"[TEST] Test URL: {test_url}")
     report = await orchestrator.analyze(test_url)
     
     # Zorunlu alan kontrolü
     required_keys = ["meta", "scores", "details", "status"]
     for key in required_keys:
         if key not in report.model_dump():
-            print(f"❌ HATA: {key} alanı raporda eksik!")
+            print(f"[ERROR] {key} alani raporda eksik!")
             return False
     
     # Skorlar 0-100 arası mı?
     for k, v in report.scores.items():
         if not (0 <= v <= 100):
-            print(f"❌ HATA: {k} skoru {v} (0-100 aralığında değil)")
+            print(f"[ERROR] {k} skoru {v} (0-100 araliginda degil)")
             return False
     
     # Test 2: Geçersiz URL (güvenlik testi)
     invalid_url = "http://localhost:8080"
     report2 = await orchestrator.analyze(invalid_url)
     if report2.status != "error":
-        print("❌ HATA: Localhost URL'i engellenmeliydi!")
+        print("[ERROR] Localhost URL'i engellenmeliydi!")
         return False
     
-    print("✅ Tüm testler başarıyla geçildi!")
+    print("[SUCCESS] Tum testler basariyla gecildi!")
     return True
 
 if __name__ == "__main__":
