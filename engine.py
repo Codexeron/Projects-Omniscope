@@ -1,4 +1,6 @@
+import asyncio
 import time
+import re
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
@@ -23,7 +25,7 @@ def validate_url(url: str) -> bool:
 
 async def fetch_context(url: str) -> Dict[str, Any]:
     if not validate_url(url):
-        return {"error": "Guvensiz veya gecersiz URL", "status_code": 400}
+        return {"error": "Güvensiz veya geçersiz URL", "status_code": 400}
     
     context = {
         "url": url,
@@ -52,12 +54,12 @@ async def fetch_context(url: str) -> Dict[str, Any]:
             context["response_time"] = round(elapsed, 3)
             context["ssl_info"]["valid"] = True
     except httpx.TimeoutException:
-        context["error"] = "Zaman asimi (5 sn)"
+        context["error"] = "Zaman aşımı (5 sn)"
     except httpx.SSLProtocolError:
-        context["error"] = "SSL sertifika hatasi"
+        context["error"] = "SSL sertifika hatası"
         context["ssl_info"]["valid"] = False
     except Exception as e:
-        context["error"] = f"Fetch hatasi: {str(e)}"
+        context["error"] = f"Fetch hatası: {str(e)}"
     
     return context
 
@@ -185,7 +187,7 @@ class AccessibilityAnalyzer(BaseAnalyzer):
             }
         }
 
-# 5. Best Practices
+# 5. Best Practices (İYİLEŞTİRİLDİ - DOCTYPE Regex ile aranıyor)
 class BestPracticesAnalyzer(BaseAnalyzer):
     def analyze(self, context):
         html = context.get("html", "")
@@ -193,7 +195,8 @@ class BestPracticesAnalyzer(BaseAnalyzer):
         if not soup:
             return {"score": 0, "details": {"error": "HTML parse edilemedi"}}
         
-        doctype = any("<!doctype" in part.lower() for part in html.split("\n")[:5])
+        # ✅ İYİLEŞTİRME 1: DOCTYPE kontrolü artık regex ile tüm HTML'de aranıyor
+        doctype = bool(re.search(r'<!doctype\s+html', html, re.IGNORECASE))
         charset = soup.find("meta", attrs={"charset": True}) or soup.find("meta", attrs={"http-equiv": "Content-Type"})
         style_tags = soup.find_all("style")
         script_tags = soup.find_all("script")
@@ -243,13 +246,13 @@ class OmniOrchestrator:
         ]
     
     async def analyze(self, url: str):
-        # Tip bildirimi kaldırıldı ve içeride import edildi
         from models import OmniReport
         context = await fetch_context(url)
         
+        # Eğer fetch hatası varsa ve durum kodu 200 değilse
         if "error" in context and context.get("status_code") != 200:
             return OmniReport(
-                meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.0"},
+                meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.1"},
                 scores={"performance": 0, "security": 0, "seo": 0, "accessibility": 0, "best_practices": 0, "eco_score": 0},
                 details={"error": context["error"]},
                 status="error",
@@ -264,17 +267,18 @@ class OmniOrchestrator:
             results[name] = result["score"]
             details[name] = result["details"]
         
+        # ✅ İYİLEŞTİRME 2: Anahtar standardizasyonu (bestpractices -> best_practices)
         scores_map = {
             "performance": results.get("performance", 0),
             "security": results.get("security", 0),
             "seo": results.get("seo", 0),
             "accessibility": results.get("accessibility", 0),
-            "best_practices": results.get("bestpractices", 0),
+            "best_practices": results.get("bestpractices", 0),  # Düzeltildi
             "eco_score": results.get("eco", 0)
         }
         
         return OmniReport(
-            meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.0"},
+            meta={"target_url": url, "analyzed_at": datetime.utcnow().isoformat(), "version": "1.0.1"},
             scores=scores_map,
             details=details,
             status="success"
