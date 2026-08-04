@@ -1,12 +1,9 @@
 import asyncio
-import ssl
-import socket
 import time
-import re
 from abc import ABC, abstractmethod
 from urllib.parse import urlparse
 from typing import Dict, Any, List, Optional
-from datetime import datetime  # EKLENDİ
+from datetime import datetime  # ✅ EKLENDİ
 
 import httpx
 from bs4 import BeautifulSoup
@@ -25,7 +22,6 @@ def validate_url(url: str) -> bool:
             return False
     return True
 
-# --- Fetch Mekanizması (Asenkron) ---
 async def fetch_context(url: str) -> Dict[str, Any]:
     if not validate_url(url):
         return {"error": "Güvensiz veya geçersiz URL", "status_code": 400}
@@ -56,7 +52,6 @@ async def fetch_context(url: str) -> Dict[str, Any]:
             context["content_length"] = len(resp.content)
             context["response_time"] = round(elapsed, 3)
             context["ssl_info"]["valid"] = True
-            
     except httpx.TimeoutException:
         context["error"] = "Zaman aşımı (5 sn)"
     except httpx.SSLProtocolError:
@@ -248,9 +243,8 @@ class OmniOrchestrator:
             EcoAnalyzer()
         ]
     
-    async def analyze(self, url: str):  # Geri dönüş tipini kaldırdım, import sorununu engellemek için
-        # models import'unu fonksiyon içine alalım
-        from models import OmniReport
+    async def analyze(self, url: str):  # Tip bildirimi kaldırıldı (import döngüsü engeli)
+        from models import OmniReport  # ✅ İçeride import edildi
         context = await fetch_context(url)
         
         if "error" in context and context.get("status_code") != 200:
